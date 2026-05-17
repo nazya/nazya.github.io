@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Blog · Nazarii Tupitsa</title>
+    <meta name="description" content="Blog posts and notes." />
+    <link rel="stylesheet" href="../styles/global.css" />
+  </head>
+  <body id="top">
+    <a class="to-top-hit" href="#top" aria-label="Back to top" title="Back to top"></a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="../">Home</a>
+        <div class="header-right">
+	          <nav class="nav" aria-label="Primary">
+	            <a href="../papers/">Papers</a>
+	            <!-- <a href="./" aria-current="page">Blog</a> -->
+	            <a href="../ergotype/">ErgoType</a>
+	          </nav>
+          <button class="theme-toggle" type="button" data-theme-toggle="true" aria-pressed="false" aria-label="Toggle theme" title="Toggle theme">
+            <span class="theme-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+		    <main class="wrap page-content">
+			        <h1>Blog</h1>
+			        <ul class="post-list">
+			          <li>
+			            <time class="post-date" datetime="2026-05-15">2026‑05‑15</time>
+			            <a href="#">Dummy Post</a>
+			          </li>
+			        </ul>
+			    </main>
+
+	    <footer class="site-footer">
+	      <div class="wrap">
+	        <span>© <span id="year"></span> Nazarii Tupitsa · <a class="footer-link" href="../credits/">Credits</a></span>
+	      </div>
+		    </footer>
+		    <script>
+		      document.getElementById("year").textContent = String(new Date().getFullYear());
+		    </script>
+		    <script src="../scripts/totop.js"></script>
+		    <script src="../scripts/layout.js"></script>
+		    <script src="../scripts/theme.js"></script>
+		  </body>
+		</html>
