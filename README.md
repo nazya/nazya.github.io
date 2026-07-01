@@ -20,7 +20,6 @@ Light, dark, and manual theme overrides reuse the same variable names. Component
 
 - `index.html` - homepage/profile
 - `papers/index.html` - publications
-- `ergotype/index.html` - ErgoType page
 - `contact/index.html` - contact QR codes
 - `styles/global.css` - shared design system and layout styles
 - `scripts/` - theme, layout, and back-to-top helpers
