@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>TP-Link CPE510: Upgrading SPI Flash to 16 MiB · Nazarii Tupitsa</title>
+    <meta name="description" content="Upgrading the TP-Link CPE510 SPI flash to 16 MiB." />
+    <link rel="stylesheet" href="../../../styles/global.css" />
+  </head>
+  <body id="top">
+    <a class="to-top-hit" href="#top" aria-label="Back to top" title="Back to top"></a>
+
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="../../../">Home</a>
+        <div class="header-right">
+          <nav class="nav" aria-label="Primary">
+            <a href="../../../papers/">Papers</a>
+            <a href="../../" aria-current="page">Blog</a>
+            <a href="../../../ErgoType/">ErgoType</a>
+          </nav>
+          <button class="theme-toggle" type="button" data-theme-toggle="true" aria-pressed="false" aria-label="Toggle theme" title="Toggle theme">
+            <span class="theme-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap page-content">
+		<p>
+		  This procedure replaces the original 8 MiB SPI NOR with a 16 MiB chip.
+		</p>
+
+		<p>
+		  The transitional 16 MiB image is created from the router's original 8 MiB full-flash dump using this layout:
+		</p>
+
+		<pre><code>0x000000 - 0x7bffff   original bootloader/table/info/firmware
+0x7c0000 - 0xfbffff   erased (0xff)
+0xfc0000 - 0xfeffff   original config from 0x7c0000
+0xff0000 - 0xffffff   original ART from 0x7f0000</code></pre>
+
+		<p>
+		  The original dump must come from the same router because ART contains device-specific radio calibration data.
+		</p>
+
+		<h2>1. Read and verify the original 8 MiB flash</h2>
+
+		<p>Read the flash at least twice:</p>
+
+		<pre><code>flashrom -p serprog:dev=/dev/ttyACM0,spispeed=16M -r cpe510-original-read1.bin
+flashrom -p serprog:dev=/dev/ttyACM0,spispeed=16M -r cpe510-original-read2.bin
+cmp cpe510-original-read1.bin cpe510-original-read2.bin</code></pre>
+
+		<p>No output from <code>cmp</code> means the dumps are identical.</p>
+
+		<p>Alternatively:</p>
+
+		<pre><code>sha256sum cpe510-original-read1.bin cpe510-original-read2.bin</code></pre>
+
+		<p>The hashes must be identical.</p>
+
+		<p>If the dumps differ, reduce the SPI speed and repeat the reads:</p>
+
+		<pre><code>16M -&gt; 8M -&gt; 4M -&gt; 2M -&gt; 1M</code></pre>
+
+		<p>
+		  Do not continue until at least two complete reads are byte-for-byte identical.
+		</p>
+
+		<p>Check the dump size:</p>
+
+		<pre><code>wc -c cpe510-original-read1.bin</code></pre>
+
+		<p>It must be:</p>
+
+		<pre><code>8388608</code></pre>
+
+		<h2>2. Create the transitional 16 MiB image</h2>
+
+		<p>Create an empty 16 MiB image filled with <code>0xff</code>:</p>
+
+		<pre><code>dd if=/dev/zero bs=1M count=16 2&gt;/dev/null | tr '\000' '\377' &gt; cpe510-migrated-16mb.bin</code></pre>
+
+		<p>Copy the original flash up to the old <code>config</code> partition:</p>
+
+		<pre><code>dd if=cpe510-original-read1.bin of=cpe510-migrated-16mb.bin bs=64K count=124 conv=notrunc</code></pre>
+
+		<p>Move <code>config</code> from <code>0x7c0000</code> to <code>0xfc0000</code>:</p>
+
+		<pre><code>dd if=cpe510-original-read1.bin of=cpe510-migrated-16mb.bin bs=64K skip=124 count=3 seek=252 conv=notrunc</code></pre>
+
+		<p>Move <code>ART</code> from <code>0x7f0000</code> to <code>0xff0000</code>:</p>
+
+		<pre><code>dd if=cpe510-original-read1.bin of=cpe510-migrated-16mb.bin bs=64K skip=127 count=1 seek=255 conv=notrunc</code></pre>
+
+		<p>Check the resulting image size:</p>
+
+		<pre><code>wc -c cpe510-migrated-16mb.bin</code></pre>
+
+		<p>It must be:</p>
+
+		<pre><code>16777216</code></pre>
+
+		<h2>3. Write and verify the new 16 MiB flash</h2>
+
+		<p>Write the image:</p>
+
+		<pre><code>flashrom -p serprog:dev=/dev/ttyACM0,spispeed=16M -w cpe510-migrated-16mb.bin</code></pre>
+
+		<p>Read the entire chip back:</p>
+
+		<pre><code>flashrom -p serprog:dev=/dev/ttyACM0,spispeed=16M -r cpe510-16mb-readback.bin</code></pre>
+
+		<p>Compare:</p>
+
+		<pre><code>cmp cpe510-migrated-16mb.bin cpe510-16mb-readback.bin</code></pre>
+
+		<p>No output means the files are identical.</p>
+
+		<p>If they differ, reduce the SPI speed and repeat the write/read/compare procedure:</p>
+
+		<pre><code>16M -&gt; 8M -&gt; 4M -&gt; 2M -&gt; 1M</code></pre>
+
+		<p>
+		  Do not continue until the complete readback is byte-for-byte identical to the image that was written.
+		</p>
+
+		<h2>4. Boot the transitional system</h2>
+
+		<p>Install the 16 MiB flash and boot the router.</p>
+
+		<p>
+		  The first boot still uses the old 8 MiB OpenWrt kernel and partition layout.
+		  Wi-Fi may not work at this stage.
+		</p>
+
+		<p>
+		  Copy the final 16 MiB CPE510 v3 sysupgrade image to <code>/tmp</code>.
+		</p>
+
+		<h2>5. Install the final 16 MiB OpenWrt image</h2>
+
+		<p>
+		  The old kernel still reports the old 8 MiB firmware partition size, so the first upgrade must be forced:
+		</p>
+
+		<pre><code>sysupgrade -F -n /tmp/openwrt-ath79-generic-tplink_cpe510-v3-squashfs-sysupgrade.bin</code></pre>
+
+		<p>
+		  <code>-F</code> is required only for this one migration upgrade.
+		</p>
+
+		<h2>6. Verify the final system</h2>
+
+		<p>After reboot:</p>
+
+		<pre><code>cat /proc/mtd</code></pre>
+
+		<p>The final layout should contain:</p>
+
+		<pre><code>firmware  00f80000
+config    00030000
+art       00010000</code></pre>
+
+		<p>The final locations are:</p>
+
+		<pre><code>firmware  0x040000 - 0xfbffff
+config    0xfc0000 - 0xfeffff
+ART       0xff0000 - 0xffffff</code></pre>
+
+		<p>Verify that Wi-Fi works.</p>
+
+		<p>
+		  The migration is now complete.
+		</p>
+
+		<p>
+		  For all future upgrades use the normal 16 MiB sysupgrade without <code>-F</code>:
+		</p>
+
+		<pre><code>sysupgrade /tmp/openwrt-ath79-generic-tplink_cpe510-v3-squashfs-sysupgrade.bin</code></pre>
+
+		<p>
+		  The SPI programmer is no longer required for normal firmware upgrades.
+		</p>
+    
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>© <span id="year"></span> Nazarii Tupitsa · <a class="footer-link" href="../../../credits/">Credits</a></span>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = String(new Date().getFullYear());
+    </script>
+    <script src="../../../scripts/totop.js"></script>
+    <script src="../../../scripts/layout.js"></script>
+    <script src="../../../scripts/copy.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+  </body>
+</html>
