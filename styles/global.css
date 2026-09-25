@@ -547,7 +547,8 @@ main.page-content {
   mask-mode: alpha;
 }
 
-.copy-text[data-copied="true"] .copy-icon {
+.copy-text[data-copied="true"] .copy-icon,
+.copy-code[data-copied="true"] .copy-icon {
   -webkit-mask-image: url("../assets/icons/copy-success.svg");
   mask-image: url("../assets/icons/copy-success.svg");
 }
@@ -597,6 +598,74 @@ main.page-content {
 pre,
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.page-content code {
+  padding: 0.12em 0.32em;
+  border-radius: calc(var(--radius-sm) / 2);
+  background: color-mix(in srgb, var(--CanvasText) 9%, transparent);
+  font-size: 0.9em;
+}
+
+.page-content pre {
+  width: 100%;
+  max-width: 100%;
+  margin: calc(var(--space) * 1.5) 0;
+  padding: var(--space) calc(var(--space) * 4) var(--space) calc(var(--space) * 1.25);
+  overflow-x: auto;
+  border: var(--border) solid var(--ButtonBorder);
+  border-radius: var(--radius-sm);
+  background: #17191f;
+  color: #e5e9ec;
+  line-height: 1.5;
+  tab-size: 2;
+  -webkit-overflow-scrolling: touch;
+}
+
+.code-block {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: calc(var(--space) * 1.5) 0;
+}
+
+.code-block pre {
+  margin: 0;
+}
+
+.copy-code {
+  appearance: none;
+  position: absolute;
+  top: calc(var(--space) * 0.5);
+  right: calc(var(--space) * 0.5);
+  display: grid;
+  place-items: center;
+  width: calc(var(--space) * 2.5);
+  height: calc(var(--space) * 2.5);
+  padding: calc(var(--space) * 0.5);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: #17191f;
+  color: #e5e9ec;
+  cursor: pointer;
+}
+
+.copy-code:hover,
+.copy-code:focus-visible {
+  color: var(--AccentColor);
+}
+
+.copy-code:focus-visible {
+  outline: var(--focus-outline) solid var(--AccentColor);
+  outline-offset: var(--focus-offset);
+}
+
+.page-content pre code {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.9em;
 }
 
 .icon {
